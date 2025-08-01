@@ -59,7 +59,7 @@ class RoleAndPermissionSeeder extends Seeder
         $analystRole = Role::firstOrCreate(['name' => 'Data Analyst']);
 
         // --- Assign Permissions to Roles ---
-        $adminRole->syncPermissions(['view admin dashboard, view divisions, creat divisions,']);
+        $adminRole->syncPermissions(Permission::all());
 
         $pmRole->syncPermissions([
             'view pm dashboard', 'view projects', 'create projects', 'edit projects', 'delete projects',
