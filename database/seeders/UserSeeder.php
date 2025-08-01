@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -14,83 +13,44 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get roles
-        $adminRole = Role::where('slug', 'admin')->first();
-        $pmRole = Role::where('slug', 'pm')->first();
-        $employeeRole = Role::where('slug', 'employee')->first();
+        // Membuat Admin
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'password' => bcrypt('password'),
+            // 'division_id' => 1, 
+            'is_active' => true,
+        ]);
+        $admin->assignRole('Admin');
 
-        // Create Admin
-        User::updateOrCreate(
-            ['email' => 'admin@sistem.com'],
-            [
-                'name' => 'Administrator',
-                'username' => 'admin',
-                'email' => 'admin@sistem.com',
-                'password' => Hash::make('password'),
-                'role_id' => $adminRole->id,
-                'division' => 'IT',
-                'phone_number' => '081234567890',
-                'is_active' => true,
-            ]
-        );
+        // Membuat Project Manager
+        $pm = User::create([
+            'name' => 'Project Manager',
+            'email' => 'pm@example.com',
+            'password' => bcrypt('password'),
+            // 'division' => 'Management', 
+            'is_active' => true,
+        ]);
+        $pm->assignRole('Project Manager');
 
-        // Create Project Manager
-        User::updateOrCreate(
-            ['email' => 'pm@sistem.com'],
-            [
-                'name' => 'Project Manager',
-                'username' => 'pm',
-                'email' => 'pm@sistem.com',
-                'password' => Hash::make('password'),
-                'role_id' => $pmRole->id,
-                'division' => 'Development',
-                'phone_number' => '081234567891',
-                'is_active' => true,
-            ]
-        );
+        // Membuat Developer
+        $developer = User::create([
+            'name' => 'Developer',
+            'email' => 'developer@example.com',
+            'password' => bcrypt('password'),
+            // 'division' => 'IT', 
+            'is_active' => true,
+        ]);
+        $developer->assignRole('Developer');
 
-        // Create Employee
-        User::updateOrCreate(
-            ['email' => 'employee@sistem.com'],
-            [
-                'name' => 'Karyawan',
-                'username' => 'employee',
-                'email' => 'employee@sistem.com',
-                'password' => Hash::make('password'),
-                'role_id' => $employeeRole->id,
-                'division' => 'Development',
-                'phone_number' => '081234567892',
-                'is_active' => true,
-            ]
-        );
-
-        // Create additional employees for testing
-        User::updateOrCreate(
-            ['email' => 'employee2@sistem.com'],
-            [
-                'name' => 'Karyawan 2',
-                'username' => 'employee2',
-                'email' => 'employee2@sistem.com',
-                'password' => Hash::make('password'),
-                'role_id' => $employeeRole->id,
-                'division' => 'Frontend',
-                'phone_number' => '081234567893',
-                'is_active' => true,
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'employee3@sistem.com'],
-            [
-                'name' => 'Karyawan 3',
-                'username' => 'employee3',
-                'email' => 'employee3@sistem.com',
-                'password' => Hash::make('password'),
-                'role_id' => $employeeRole->id,
-                'division' => 'Backend',
-                'phone_number' => '081234567894',
-                'is_active' => true,
-            ]
-        );
+        // Membuat QA
+        $qa = User::create([
+            'name' => 'QA',
+            'email' => 'qa@example.com',
+            'password' => bcrypt('password'),
+            // 'division' => 'IT', 
+            'is_active' => true,
+        ]);
+        $qa->assignRole('QA');
     }
 }

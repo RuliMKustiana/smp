@@ -7,25 +7,32 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Menjalankan migrasi.
+     *
+     * @return void
      */
     public function up(): void
     {
         Schema::table('attachments', function (Blueprint $table) {
-            // Hapus kolom 'task_id' yang konflik jika ada.
-            // Kolom ini tidak diperlukan untuk relasi polimorfik.
+            // Memeriksa dan menghapus kolom 'task_id' yang lama jika ada.
             if (Schema::hasColumn('attachments', 'task_id')) {
-                // Hapus foreign key constraint terlebih dahulu jika ada
-                // Nama constraint bisa bervariasi, ini adalah nama default Laravel
+                
+                // Mencoba menghapus foreign key terlebih dahulu.
+                // Dibungkus dalam try-catch untuk menangani kasus jika key sudah tidak ada.
                 try {
-                    $table->dropForeign(['task_id']);
+                    // Nama constraint default Laravel adalah 'nama_tabel_nama_kolom_foreign'
+                    $table->dropForeign('attachments_task_id_foreign');
                 } catch (\Exception $e) {
-                    // Abaikan jika constraint tidak ditemukan
+                    // Jika gagal (karena tidak ada), tidak masalah. Lanjutkan saja.
+                    // Anda bisa menambahkan log atau pesan jika perlu.
+                    // echo "Notice: Foreign key 'attachments_task_id_foreign' tidak ditemukan. Melanjutkan...\n";
                 }
+                
+                // Setelah key (kemungkinan) sudah dihapus, hapus kolomnya.
                 $table->dropColumn('task_id');
             }
 
-            // Pastikan kolom polimorfik ada
+            // Memastikan kolom polimorfik 'attachable' ada.
             if (!Schema::hasColumn('attachments', 'attachable_id')) {
                 $table->unsignedBigInteger('attachable_id')->after('id');
             }
@@ -36,14 +43,24 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Membatalkan migrasi.
+     *
+     * @return void
      */
     public function down(): void
     {
         Schema::table('attachments', function (Blueprint $table) {
-            // Opsi untuk mengembalikan kolom jika migrasi di-rollback
+            // Menghapus kolom polimorfik
+            if (Schema::hasColumn('attachments', 'attachable_id')) {
+                 $table->dropColumn('attachable_id');
+            }
+            if (Schema::hasColumn('attachments', 'attachable_type')) {
+                 $table->dropColumn('attachable_type');
+            }
+
+            // Mengembalikan kolom 'task_id' jika migrasi di-rollback
             if (!Schema::hasColumn('attachments', 'task_id')) {
-                $table->foreignId('task_id')->nullable()->after('id');
+                $table->foreignId('task_id')->nullable()->constrained()->after('id');
             }
         });
     }

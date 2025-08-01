@@ -4,94 +4,70 @@ namespace App\Policies;
 
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class TaskPolicy
 {
-    /**
-     * Izinkan admin untuk melakukan semua aksi.
-     */
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->role->slug === 'admin') {
+        if ($user->hasRole('Admin')) { 
             return true;
         }
         return null;
     }
 
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug === 'pm' || $user->role->slug === 'employee';
+        return $user->can('view tasks');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Task $task): bool
     {
-        // PM dapat melihat semua task dalam proyeknya
-        if ($user->role->slug === 'pm') {
+        if (!$user->can('view tasks')) {
+            return false;
+        }
+        
+        if ($user->hasRole('Project Manager')) {
             return $user->id === $task->project->project_manager_id;
         }
-
-        // Employee dapat melihat task yang ditugaskan kepadanya atau dalam proyek yang dia ikuti
-        if ($user->role->slug === 'employee') {
-            return $task->assigned_to_id === $user->id || 
-                   $task->project->members->contains($user);
-        }
-
-        return false;
+        
+        return $task->project->members->contains($user);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->role->slug === 'pm';
+        return $user->can('create tasks');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Task $task): bool
     {
-        // PM dapat update task dalam proyeknya
-        if ($user->role->slug === 'pm') {
+        if ($user->can('update tasks as project manager')) {
             return $user->id === $task->project->project_manager_id;
         }
 
-        // Employee dapat update status task yang ditugaskan kepadanya
-        if ($user->role->slug === 'employee') {
-            return $task->assigned_to_id === $user->id;
+        if ($user->can('update tasks as developer')) {
+            return $task->assigned_to_id === $user->id &&
+                   in_array($task->status, ['To-Do', 'In Progress', 'Revisi', 'In Review']);
+        }
+
+        if ($user->can('update tasks as qa')) {
+            return $task->project->members->contains($user) &&
+                   $task->status === 'In Review';
         }
 
         return false;
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Task $task): bool
     {
-        // Hanya PM yang dapat menghapus task
-        return $user->role->slug === 'pm' && 
-               $user->id === $task->project->project_manager_id;
+        return $user->can('delete tasks') && $user->id === $task->project->project_manager_id;
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Task $task): bool
     {
         return false;
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Task $task): bool
     {
         return false;

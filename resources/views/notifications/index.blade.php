@@ -31,31 +31,20 @@
                     <div class="card-body">
                         <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
-                                @switch($notification->data['type'] ?? '')
-                                    @case('task_assigned')
-                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                            <i class="fas fa-tasks text-primary"></i>
-                                        </div>
-                                        @break
-                                    @case('task_updated')
-                                        <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                            <i class="fas fa-edit text-warning"></i>
-                                        </div>
-                                        @break
-                                    @case('report_validated')
-                                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        </div>
-                                        @break
-                                    @default
-                                        <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                            <i class="fas fa-bell text-info"></i>
-                                        </div>
-                                @endswitch
+                                @php
+                                    $iconClass = 'fa-bell text-info';
+                                    $bgClass = 'bg-info';
+                                    if(isset($notification->data['task_id'])) { $iconClass = 'fa-tasks text-primary'; $bgClass = 'bg-primary'; }
+                                    elseif(isset($notification->data['project_id'])) { $iconClass = 'fa-project-diagram text-warning'; $bgClass = 'bg-warning'; }
+                                    elseif(isset($notification->data['report_id'])) { $iconClass = 'fa-file-alt text-success'; $bgClass = 'bg-success'; }
+                                @endphp
+                                <div class="{{$bgClass}} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <i class="fas {{ $iconClass }}"></i>
+                                </div>
                             </div>
                             <div class="flex-grow-1">
                                 <h6 class="mb-1 fw-bold">
-                                    {{ $notification->data['title'] ?? 'Notifikasi' }}
+                                    {{ $notification->data['task_title'] ?? $notification->data['project_name'] ?? 'Notifikasi Baru' }}
                                     @if(!$notification->read_at)
                                         <span class="badge bg-primary ms-2">Baru</span>
                                     @endif
@@ -70,43 +59,41 @@
                                     </small>
                                     <div>
                                         @if(!$notification->read_at)
-                                            <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('{{ $notification->id }}')">
-                                                <i class="fas fa-check me-1"></i>
-                                                Tandai Dibaca
-                                            </button>
+                                            <form method="POST" action="{{ route('notifications.mark-as-read', $notification->id) }}" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    Tandai Dibaca
+                                                </button>
+                                            </form>
                                         @endif
                                         
+                                        @php $user = auth()->user(); @endphp
+
                                         @if(isset($notification->data['task_id']))
-                                            @if(auth()->user()->isProjectManager())
+                                            @if($user->hasRole('Project Manager'))
                                                 <a href="{{ route('pm.tasks.show', $notification->data['task_id']) }}" class="btn btn-sm btn-primary ms-2">
-                                                    <i class="fas fa-eye me-1"></i>
-                                                    Lihat Task
+                                                    <i class="fas fa-eye me-1"></i> Lihat Tugas
                                                 </a>
-                                            @elseif(auth()->user()->isEmployee())
-                                                <a href="{{ route('employee.tasks.show', $notification->data['task_id']) }}" class="btn btn-sm btn-primary ms-2">
-                                                    <i class="fas fa-eye me-1"></i>
-                                                    Lihat Task
+                                            @elseif($user->hasRole(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst']))
+                                                <a href="{{ route('teammember.tasks.show', $notification->data['task_id']) }}" class="btn btn-sm btn-primary ms-2">
+                                                    <i class="fas fa-eye me-1"></i> Lihat Tugas
                                                 </a>
                                             @endif
-                                        @endif
-
-                                        @if(isset($notification->data['report_id']) && auth()->user()->isProjectManager())
-                                            <a href="{{ route('pm.reports.show', $notification->data['report_id']) }}" class="btn btn-sm btn-primary ms-2">
-                                                <i class="fas fa-eye me-1"></i>
-                                                Lihat Laporan
-                                            </a>
-                                        @endif
-
-                                        @if(isset($notification->data['project_id']))
-                                            @if(auth()->user()->isProjectManager())
+                                        @elseif(isset($notification->data['project_id']))
+                                             @if($user->hasRole('Project Manager'))
                                                 <a href="{{ route('pm.projects.show', $notification->data['project_id']) }}" class="btn btn-sm btn-outline-secondary ms-2">
-                                                    <i class="fas fa-project-diagram me-1"></i>
-                                                    Lihat Proyek
+                                                    <i class="fas fa-project-diagram me-1"></i> Lihat Proyek
                                                 </a>
-                                            @elseif(auth()->user()->isEmployee())
-                                                <a href="{{ route('employee.projects.show', $notification->data['project_id']) }}" class="btn btn-sm btn-outline-secondary ms-2">
-                                                    <i class="fas fa-project-diagram me-1"></i>
-                                                    Lihat Proyek
+                                            @elseif($user->hasRole(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst']))
+                                                <a href="{{ route('teammember.projects.show', $notification->data['project_id']) }}" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="fas fa-project-diagram me-1"></i> Lihat Proyek
+                                                </a>
+                                            @endif
+                                        @elseif(isset($notification->data['report_id']))
+                                            @if($user->hasRole('Project Manager'))
+                                                <a href="{{ route('pm.reports.show', $notification->data['report_id']) }}" class="btn btn-sm btn-primary ms-2">
+                                                    <i class="fas fa-eye me-1"></i> Lihat Laporan
                                                 </a>
                                             @endif
                                         @endif
@@ -133,27 +120,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function markAsRead(notificationId) {
-    fetch(`/notifications/${notificationId}/mark-as-read`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Reload halaman untuk update tampilan
-            window.location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-</script>
-@endpush

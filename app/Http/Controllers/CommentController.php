@@ -15,6 +15,7 @@ class CommentController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'body' => 'required|string|max:2000',
             'commentable_id' => 'required',

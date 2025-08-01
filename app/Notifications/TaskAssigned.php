@@ -41,7 +41,7 @@ class TaskAssigned extends Notification
                     ->line('Anda telah ditugaskan untuk task baru.')
                     ->line('Task: ' . $this->task->title)
                     ->line('Proyek: ' . $this->task->project->name)
-                    ->action('Lihat Task', url('/employee/tasks/' . $this->task->id))
+                    ->action('Lihat Task', url('/teammember/tasks/' . $this->task->id))
                     ->line('Terima kasih!');
     }
 

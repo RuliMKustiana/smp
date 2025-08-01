@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\Storage;
 class TaskController extends Controller
 {
     use AuthorizesRequests;
-
-    // ... (Metode index, create, show, edit tidak perlu diubah) ...
     
     public function index(Request $request)
     {
@@ -46,7 +44,7 @@ class TaskController extends Controller
                       ->paginate(15);
 
         $projects = Project::where('project_manager_id', Auth::id())->orderBy('name')->get();
-        $statuses = ['Belum Dikerjakan', 'In Progress', 'Selesai', 'Revisi', 'Blocked'];
+        $statuses = ['To-Do', 'In Progress' , 'In Review', 'Completed', 'Blocked'];
         return view('pm.tasks.index', compact('tasks', 'projects', 'statuses'));
     }
 
@@ -70,7 +68,7 @@ class TaskController extends Controller
             'assigned_to_id' => 'nullable|exists:users,id',
             'deadline' => 'nullable|date',
             'parent_task_id' => 'nullable|exists:tasks,id',
-            'status' => 'required|in:Belum Dikerjakan,In Progress,Selesai,Revisi,Blocked',
+            'status' => 'required|in:To-Do,In Progress,Selesai,Revisi,Blocked',
             'estimated_hours' => 'nullable|numeric|min:0',
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|max:10240',
@@ -83,11 +81,10 @@ class TaskController extends Controller
                 $filename = $file->getClientOriginalName();
                 $path = $file->storeAs('attachments/tasks/' . $task->id, $filename, 'public');
 
-                // PERBAIKAN DI SINI: Pastikan kunci array cocok dengan $fillable di model Attachment
                 $task->attachments()->create([
                     'user_id'   => Auth::id(),
-                    'file_name' => $filename, // Menggunakan 'file_name'
-                    'file_path' => $path,     // Menggunakan 'file_path'
+                    'file_name' => $filename, 
+                    'file_path' => $path,     
                     'file_size' => $file->getSize(),
                 ]);
             }
@@ -131,7 +128,7 @@ class TaskController extends Controller
             'assigned_to_id' => 'nullable|exists:users,id',
             'deadline' => 'nullable|date',
             'parent_task_id' => 'nullable|exists:tasks,id',
-            'status' => 'required|in:Belum Dikerjakan,In Progress,Selesai,Revisi,Blocked',
+            'status' => 'required|in:To-Do,In Progress,Selesai,Revisi,Blocked',
             'priority' => 'nullable|in:Rendah,Sedang,Tinggi',
             'estimated_hours' => 'nullable|numeric|min:0',
             'attachments' => 'nullable|array',
@@ -145,11 +142,10 @@ class TaskController extends Controller
                 $filename = $file->getClientOriginalName();
                 $path = $file->storeAs('attachments/tasks/' . $task->id, $filename, 'public');
 
-                // PERBAIKAN DI SINI: Pastikan kunci array cocok dengan $fillable di model Attachment
                 $task->attachments()->create([
                     'user_id'   => Auth::id(),
-                    'file_name' => $filename, // Menggunakan 'file_name'
-                    'file_path' => $path,     // Menggunakan 'file_path'
+                    'file_name' => $filename, 
+                    'file_path' => $path, 
                     'file_size' => $file->getSize(),
                 ]);
             }

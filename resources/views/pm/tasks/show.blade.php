@@ -42,13 +42,13 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="attachment-tab" data-bs-toggle="tab"
-                                    data-bs-target="#attachment-pane" type="button" role="tab">Lampiran <span
-                                        class="badge bg-secondary ms-1">{{ $task->attachments->count() }}</span></button>
+                                    data-bs-target="#attachment-pane" type="button" role="tab">Lampiran 
+                                    <span class="badge bg-secondary ms-1">{{ $task->attachments->count() }}</span></button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="discussion-tab" data-bs-toggle="tab"
-                                    data-bs-target="#discussion-pane" type="button" role="tab">Diskusi <span
-                                        class="badge bg-secondary ms-1">{{ $task->comments->count() }}</span></button>
+                                    data-bs-target="#discussion-pane" type="button" role="tab">Diskusi 
+                                    <span class="badge bg-secondary ms-1">{{ $task->comments->count() }}</span></button>
                             </li>
                         </ul>
                     </div>

@@ -6,24 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-    {
-        Schema::table('task_updates', function (Blueprint $table) {
-            // Menambahkan kolom untuk menyimpan link setelah kolom 'description'
+{
+    Schema::table('task_updates', function (Blueprint $table) {
+        // Cek dulu apakah kolom 'link' BELUM ada
+        if (!Schema::hasColumn('task_updates', 'link')) {
+            // Jika belum ada, baru tambahkan
             $table->string('link')->nullable()->after('description');
-        });
-    }
+        }
+    });
+}
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('task_updates', function (Blueprint $table) {
-            //
-        });
+        // Kosongkan saja method down ini, karena ini hanya perbaikan satu arah
     }
 };

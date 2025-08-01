@@ -12,61 +12,46 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Menampilkan form untuk mengedit profil pengguna.
-     */
     public function edit(Request $request): View
     {
+        // dd(Auth::user()->getAttributes());
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => Auth::user(),
         ]);
     }
 
-    /**
-     * Memperbarui informasi profil pengguna.
-     * Method ini sudah dirombak total untuk menangani field baru dan upload foto.
-     */
     public function update(Request $request): RedirectResponse
     {
-        // Aturan validasi untuk semua field baru Anda
-        $validated = $request->validate([
+        $user = Auth::user();
+
+        $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$request->user()->id],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$request->user()->id],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'division' => ['nullable', 'string', 'max:255'],
             'phone_number' => ['nullable', 'string', 'max:20'],
-            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'], // Validasi untuk gambar
-            'is_active' => ['sometimes', 'boolean'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
 
-        // 1. Handle upload foto profil
         if ($request->hasFile('profile_photo')) {
-            // Hapus foto lama dari storage jika ada
-            if ($request->user()->profile_photo_path) {
-                Storage::disk('public')->delete($request->user()->profile_photo_path);
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
             }
-            // Simpan foto baru di folder 'public/profile-photos'
-            $validated['profile_photo_path'] = $request->file('profile_photo')->store('profile-photos', 'public');
+            $data['profile_photo_path'] = $request->file('profile_photo')->store('profile-photos', 'public');
         }
 
-        // 2. Handle status aktif (checkbox)
-        // Jika checkbox dicentang, nilainya '1'. Jika tidak, tidak ada nilai.
-        $validated['is_active'] = $request->has('is_active');
-
-        // 3. Cek jika email diubah, reset verifikasi email
-        if ($request->user()->email !== $validated['email']) {
-            $validated['email_verified_at'] = null;
+        if (auth()->user()->hasRole('Admin')) {
+            $data['is_active'] = $request->has('is_active');
         }
 
-        // 4. Update data user
-        $request->user()->update($validated);
+        if ($user->email !== $data['email']) {
+            $data['email_verified_at'] = null;
+        }
+
+        $user->update($data);
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Menghapus akun pengguna.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [

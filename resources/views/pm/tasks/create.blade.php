@@ -91,7 +91,7 @@
                                 <div class="mb-3">
                                     <label for="status" class="form-label">Status Awal <span class="text-danger">*</span></label>
                                     <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                                        <option value="Belum Dikerjakan" {{ old('status', 'Belum Dikerjakan') == 'Belum Dikerjakan' ? 'selected' : '' }}>Belum Dikerjakan</option>
+                                        <option value="To-Do" {{ old('status', 'To-Do') == 'To-Do' ? 'selected' : '' }}>To-Do</option>
                                         <option value="In Progress" {{ old('status') == 'In Progress' ? 'selected' : '' }}>In Progress</option>
                                         <option value="Blocked" {{ old('status') == 'Blocked' ? 'selected' : '' }}>Blocked</option>
                                     </select>

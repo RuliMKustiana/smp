@@ -14,9 +14,6 @@ class ReportValidated extends Notification implements ShouldQueue
 
     protected $report;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(Report $report)
     {
         $this->report = $report;
@@ -32,9 +29,6 @@ class ReportValidated extends Notification implements ShouldQueue
         return ['database', 'mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         $status = $this->report->status === 'Disetujui' ? 'disetujui' : 'ditolak';

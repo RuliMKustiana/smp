@@ -87,9 +87,9 @@
                                         <select class="form-select @error('status') is-invalid @enderror" id="status"
                                             name="status" required>
                                             {{-- PERBAIKAN: Nilai disesuaikan dengan aturan validasi controller --}}
-                                            <option value="Belum Dikerjakan"
-                                                {{ old('status', $task->status) === 'Belum Dikerjakan' ? 'selected' : '' }}>
-                                                Belum Dikerjakan</option>
+                                            <option value="To-Do"
+                                                {{ old('status', $task->status) === 'To-Do' ? 'selected' : '' }}>
+                                                To-Do</option>
                                             <option value="In Progress"
                                                 {{ old('status', $task->status) === 'In Progress' ? 'selected' : '' }}>In
                                                 Progress</option>

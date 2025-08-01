@@ -9,57 +9,59 @@ use Illuminate\Auth\Access\Response;
 class ProjectPolicy
 {
     /**
-     * Izinkan admin untuk melakukan semua aksi.
+     * Perform pre-authorization checks.
      */
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->role->slug === 'admin') {
+        // Gunakan hasRole() dari Spatie
+        if ($user->hasRole('Admin')) {
             return true;
         }
         return null;
     }
 
     /**
-     * Tentukan apakah user bisa melihat daftar proyek.
-     * Hanya PM yang bisa melihat proyek yang mereka kelola.
+     * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->role->slug === 'pm';
+        // Cek berdasarkan izin, bukan peran
+        return $user->can('view projects');
     }
 
     /**
-     * Tentukan apakah user bisa melihat detail proyek.
-     * Hanya PM dari proyek tsb atau anggota tim yang bisa melihat.
+     * Determine whether the user can view the model.
      */
     public function view(User $user, Project $project): bool
     {
+        // PM proyek atau anggota tim bisa melihat detail proyek
         return $user->id === $project->project_manager_id || 
                $project->members->contains($user);
     }
 
     /**
-     * Tentukan apakah user bisa membuat proyek baru.
+     * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        return $user->role->slug === 'pm';
+        return $user->can('create projects');
     }
 
     /**
-     * Tentukan apakah user bisa mengupdate proyek.
-     * Hanya PM dari proyek tsb yang bisa update.
+     * Determine whether the user can update the model.
      */
     public function update(User $user, Project $project): bool
     {
-        return $user->id === $project->project_manager_id;
+        // Hanya PM dari proyek tersebut yang boleh update
+        return $user->can('edit projects') && $user->id === $project->project_manager_id;
     }
 
     /**
-     * Tentukan apakah user bisa menghapus proyek.
+     * Determine whether the user can delete the model.
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->id === $project->project_manager_id;
+        // Hanya PM dari proyek tersebut yang boleh hapus
+        return $user->can('delete projects') && $user->id === $project->project_manager_id;
     }
 }

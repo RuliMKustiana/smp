@@ -10,47 +10,43 @@ class KanbanBoard extends Component
 {
     public $projectId;
 
-    // `mount` sekarang hanya bertugas menyimpan ID proyek
     public function mount($projectId)
     {
         $this->projectId = $projectId;
     }
 
-    // Method ini akan dipanggil oleh Livewire saat status tugas diperbarui
-    public function onStatusUpdate($taskId, $newStatus)
+    /**
+     * @param array
+     * @return void
+     */
+    public function onUpdateTasks($groups)
     {
-        $task = Task::find($taskId);
-        if ($task) {
-            $task->status = $newStatus;
-            $task->save();
-            // Tidak perlu memuat ulang data. Livewire akan me-render ulang secara otomatis.
+        foreach ($groups as $group) {
+            $newStatus = $group['value'];
+
+            foreach ($group['items'] as $index => $item) {
+
+                $taskId = $item['value'];
+                
+                Task::find($taskId)->update([
+                    'status' => $newStatus,
+                    'position' => $index + 1, 
+                ]);
+            }
         }
     }
 
-    // Method ini akan dipanggil oleh Livewire saat posisi tugas diubah
-    public function onSortOrderUpdate($sortedIds)
-    {
-        foreach ($sortedIds as $index => $id) {
-            Task::where('id', $id)->update(['position' => $index + 1]);
-        }
-        // Tidak perlu memuat ulang data.
-    }
-
-    // Method render sekarang bertanggung jawab penuh atas pengambilan data
     public function render()
     {
-        // Ambil semua data yang dibutuhkan di sini, setiap kali komponen di-render
+        
         $project = Project::with([
             'tasks' => function ($query) {
-                // Eager load relasi yang diperlukan oleh kartu tugas
                 $query->with('assignedTo')->orderBy('position', 'asc');
             }
         ])->findOrFail($this->projectId);
 
-        // Kelompokkan tugas berdasarkan status untuk ditampilkan di papan Kanban
         $tasksByStatus = $project->tasks->groupBy('status');
         
-        // Kirim data ke view Livewire
         return view('livewire.project.kanban-board', [
             'project' => $project,
             'tasksByStatus' => $tasksByStatus

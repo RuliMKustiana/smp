@@ -8,7 +8,6 @@
         <h1>Pencarian Global</h1>
     </div>
 
-    <!-- Search Form -->
     <div class="row mb-4">
         <div class="col-md-8 mx-auto">
             <form method="GET" action="{{ route('search.index') }}">
@@ -28,10 +27,8 @@
     </div>
 
     @if(!empty($query))
-        <!-- Search Results -->
         <div class="row">
-            <!-- Projects Results -->
-            @if(auth()->user()->isAdmin() || auth()->user()->isProjectManager() || !$results['projects']->isEmpty())
+            @can('view projects')
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -44,13 +41,21 @@
                         @forelse($results['projects'] as $project)
                             <div class="border-bottom pb-2 mb-2">
                                 <h6 class="mb-1">
-                                    <a href="{{ route(auth()->user()->isAdmin() ? '#' : (auth()->user()->isProjectManager() ? 'pm.projects.show' : 'employee.projects.show'), $project) }}" class="text-decoration-none">
+                                    @php
+                                        $projectUrl = '#';
+                                        if (auth()->user()->hasRole('Project Manager')) {
+                                            $projectUrl = route('pm.projects.show', $project);
+                                        } elseif (auth()->user()->hasRole(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst'])) {
+                                            $projectUrl = route('teammember.projects.show', $project);
+                                        }
+                                    @endphp
+                                    <a href="{{ $projectUrl }}" class="text-decoration-none">
                                         {{ $project->name }}
                                     </a>
                                 </h6>
                                 <p class="text-muted small mb-1">{{ Str::limit($project->description, 80) }}</p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-{{ $project->status === 'Selesai' ? 'success' : ($project->status === 'In Progress' ? 'primary' : 'secondary') }}">
+                                    <span class="badge bg-{{ $project->status === 'Completed' ? 'success' : ($project->status === 'In Progress' ? 'primary' : 'secondary') }}">
                                         {{ $project->status }}
                                     </span>
                                     <small class="text-muted">{{ $project->projectManager->name }}</small>
@@ -62,9 +67,9 @@
                     </div>
                 </div>
             </div>
-            @endif
+            @endcan
 
-            <!-- Tasks Results -->
+            @can('view tasks')
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -77,20 +82,30 @@
                         @forelse($results['tasks'] as $task)
                             <div class="border-bottom pb-2 mb-2">
                                 <h6 class="mb-1">
-                                    <a href="{{ route(auth()->user()->isAdmin() ? '#' : (auth()->user()->isProjectManager() ? 'pm.tasks.show' : 'employee.tasks.show'), $task) }}" class="text-decoration-none">
+                                    @php
+                                        $taskUrl = '#';
+                                        if (auth()->user()->hasRole('Project Manager')) {
+                                            $taskUrl = route('pm.tasks.show', $task);
+                                        } elseif (auth()->user()->hasRole(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst'])) {
+                                            $taskUrl = route('teammember.tasks.show', $task);
+                                        }
+                                    @endphp
+                                    <a href="{{ $taskUrl }}" class="text-decoration-none">
                                         {{ $task->title }}
                                     </a>
                                 </h6>
                                 <p class="text-muted small mb-1">{{ Str::limit($task->description, 80) }}</p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-{{ $task->status === 'Selesai' ? 'success' : ($task->status === 'In Progress' ? 'primary' : 'secondary') }}">
+                                    <span class="badge bg-{{ $task->status === 'Completed' ? 'success' : ($task->status === 'In Progress' ? 'primary' : 'secondary') }}">
                                         {{ $task->status }}
                                     </span>
                                     <small class="text-muted">{{ $task->project->name }}</small>
                                 </div>
+                                @if($task->assignedTo)
                                 <small class="text-muted d-block">
                                     Ditugaskan ke: {{ $task->assignedTo->name }}
                                 </small>
+                                @endif
                             </div>
                         @empty
                             <p class="text-muted mb-0">Tidak ada tugas ditemukan</p>
@@ -98,9 +113,9 @@
                     </div>
                 </div>
             </div>
+            @endcan
 
-            <!-- Users Results (Admin only) -->
-            @if(auth()->user()->isAdmin())
+            @can('manage users')
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -119,10 +134,8 @@
                                 </h6>
                                 <p class="text-muted small mb-1">{{ $user->email }}</p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-info">{{ $user->role->name }}</span>
-                                    @if($user->division)
-                                        <small class="text-muted">{{ $user->division }}</small>
-                                    @endif
+                                    <span class="badge bg-info">{{ $user->getRoleNames()->first() ?? 'N/A' }}</span>
+                                    <small class="text-muted">{{ $user->division?->name ?? '' }}</small>
                                 </div>
                             </div>
                         @empty
@@ -131,10 +144,10 @@
                     </div>
                 </div>
             </div>
-            @endif
+            @endcan
         </div>
 
-        @if($results['projects']->isEmpty() && $results['tasks']->isEmpty() && $results['users']->isEmpty())
+        @if($results['projects']->isEmpty() && $results['tasks']->isEmpty() && (!$results['users'] || $results['users']->isEmpty()))
             <div class="text-center py-5">
                 <i class="fas fa-search fa-3x text-muted mb-3"></i>
                 <h4 class="text-muted">Tidak ada hasil ditemukan</h4>
@@ -142,7 +155,6 @@
             </div>
         @endif
     @else
-        <!-- Empty State -->
         <div class="text-center py-5">
             <i class="fas fa-search fa-3x text-muted mb-3"></i>
             <h4 class="text-muted">Mulai pencarian</h4>
@@ -151,21 +163,3 @@
     @endif
 </div>
 @endsection
-
-@push('scripts')
-<script>
-// Auto search functionality (optional)
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.querySelector('input[name="q"]');
-    
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.closest('form').submit();
-            }
-        });
-    }
-});
-</script>
-@endpush

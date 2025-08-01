@@ -65,7 +65,6 @@
 
         <!-- BARIS GRAFIK DAN DAFTAR DEADLINE -->
         <div class="row">
-            {{-- ==== PERGANTIAN DARI CANVAS CHART KE HTML/CSS BAR STATS ==== --}}
             <div class="col-xl-7 col-lg-6">
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white py-3">
@@ -78,7 +77,6 @@
                                     $value = $project_status_values[$index] ?? 0;
                                     $totalProjectsForPercentage = $total_projects > 0 ? $total_projects : 1;
                                     $percentage = round(($value / $totalProjectsForPercentage) * 100);
-                                    // Membuat nama kelas CSS yang valid dari label status
                                     $status_class = \Illuminate\Support\Str::slug($label);
                                 @endphp
                                 <div class="status-bar-item mb-3">
