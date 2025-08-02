@@ -13,6 +13,10 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $adminRole = Role::create(['name' => 'Admin']);
+        $pmRole = Role::create(['name' => 'Project Manager']);
+        $developerRole = Role::create(['name' => 'Developer']);
+        $qaRole = Role::create(['name' => 'QA']);
         // Membuat Admin
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
