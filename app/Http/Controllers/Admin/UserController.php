@@ -43,7 +43,7 @@ class UserController extends Controller
         $data['is_active'] = $request->has('is_active');
 
         if ($request->hasFile('profile_photo_path')) {
-            $data['profile_photo_path'] = $request->file('profile_photo')->store('profile-photos', 'public');
+            $data['profile_photo_path'] = $request->file('profile_photo_path')->store('profile-photos', 'public');
         }
 
         $user = User::create($data);

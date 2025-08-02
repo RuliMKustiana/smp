@@ -51,8 +51,8 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('divisions', DivisionController::class)->except(['show']);
     Route::get('/reports', [ReportValidationController::class, 'index'])->name('reports.index');
     Route::get('/reports/{report}', [ReportValidationController::class, 'show'])->name('reports.show');
-    Route::post('/reports/{report}/validate', [ReportValidationController::class, 'validateReport'])->name('reports.validate');
-    Route::post('/reports/{report}/reject', [ReportValidationController::class, 'rejectReport'])->name('reports.reject');
+    Route::post('/reports/{report}/process', [ReportValidationController::class, 'processValidation'])->name('admin.reports.process');
+     Route::post('reports/{report}/process', [ReportValidationController::class, 'processValidation'])->name('reports.process');
 });
 
 Route::middleware(['auth', 'role:Project Manager'])->prefix('pm')->name('pm.')->group(function () {

@@ -14,43 +14,47 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Membuat Admin
-        $admin = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            // 'division_id' => 1, 
-            'is_active' => true,
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
         $admin->assignRole('Admin');
 
         // Membuat Project Manager
-        $pm = User::create([
-            'name' => 'Project Manager',
-            'email' => 'pm@example.com',
-            'password' => bcrypt('password'),
-            // 'division' => 'Management', 
-            'is_active' => true,
-        ]);
+        $pm = User::firstOrCreate(
+            ['email' => 'pm@example.com'],
+            [
+                'name' => 'Project Manager',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
         $pm->assignRole('Project Manager');
 
         // Membuat Developer
-        $developer = User::create([
-            'name' => 'Developer',
-            'email' => 'developer@example.com',
-            'password' => bcrypt('password'),
-            // 'division' => 'IT', 
-            'is_active' => true,
-        ]);
+        $developer = User::firstOrCreate(
+            ['email' => 'developer@example.com'],
+            [
+                'name' => 'Developer',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
         $developer->assignRole('Developer');
 
         // Membuat QA
-        $qa = User::create([
-            'name' => 'QA',
-            'email' => 'qa@example.com',
-            'password' => bcrypt('password'),
-            // 'division' => 'IT', 
-            'is_active' => true,
-        ]);
+        $qa = User::firstOrCreate(
+            ['email' => 'qa@example.com'],
+            [
+                'name' => 'QA',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
         $qa->assignRole('QA');
     }
 }

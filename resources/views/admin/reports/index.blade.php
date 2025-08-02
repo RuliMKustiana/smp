@@ -14,11 +14,10 @@
                         <button class="btn btn-light btn-sm dropdown-toggle mb-0" type="button" 
                                 data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-filter me-1"></i> 
-                            Filter: {{ Str::ucfirst(request('status', 'Semua')) }}
+                            Filter Riwayat: {{ Str::ucfirst(request('status', 'Semua')) }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ route('admin.reports.index') }}">Semua</a></li>
-                            <li><a class="dropdown-item" href="{{ route('admin.reports.index', ['status' => 'pending']) }}">Pending</a></li>
                             <li><a class="dropdown-item" href="{{ route('admin.reports.index', ['status' => 'validated']) }}">Disetujui</a></li>
                             <li><a class="dropdown-item" href="{{ route('admin.reports.index', ['status' => 'rejected']) }}">Ditolak</a></li>
                         </ul>
@@ -32,17 +31,7 @@
         <div class="alert alert-success text-white">{{ session('success') }}</div>
     @endif
 
-    @php
-        // Memisahkan laporan menjadi dua koleksi: pending dan yang sudah divalidasi
-        $pendingReports = $reports->filter(function ($report) {
-            return in_array($report->status, ['pending', 'Menunggu Persetujui']);
-        });
-        $validatedReports = $reports->filter(function ($report) {
-            return !in_array($report->status, ['pending', 'Menunggu Persetujui']);
-        });
-    @endphp
-
-    {{-- TABEL 1: LAPORAN MENUNGGU VALIDASI --}}
+    {{-- TABEL 1: MENUNGGU VALIDASI --}}
     <div class="card my-4">
         <div class="card-header">
             <h5 class="mb-0">Menunggu Validasi <span class="badge bg-gradient-warning ms-2">{{ $pendingReports->count() }}</span></h5>
@@ -122,9 +111,9 @@
                                     </td>
                                     <td><p class="text-xs font-weight-bold mb-0">{{ $report->submittedBy->name ?? 'N/A' }}</p></td>
                                     <td class="align-middle text-center text-sm">
-                                        @if($report->status === 'Disetujui' || $report->status === 'validated')
+                                        @if(in_array($report->status, ['validated', 'Disetujui']))
                                             <span class="badge badge-sm bg-gradient-success">Disetujui</span>
-                                        @elseif($report->status === 'Ditolak' || $report->status === 'rejected')
+                                        @elseif(in_array($report->status, ['rejected', 'Ditolak']))
                                             <span class="badge badge-sm bg-gradient-danger">Ditolak</span>
                                         @endif
                                         <p class="text-xs text-secondary mb-0 mt-1">
@@ -144,10 +133,10 @@
             @endif
         </div>
     </div>
-    
-    {{-- Pagination Links --}}
+
+    {{-- Pagination Links untuk tabel riwayat --}}
     <div class="d-flex justify-content-center mt-4">
-        {{ $reports->appends(request()->query())->links() }}
+        {{ $validatedReports->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection

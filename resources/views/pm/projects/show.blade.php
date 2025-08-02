@@ -32,7 +32,6 @@
             </div>
         </div>
         <div class="card-body">
-            {{-- Letakkan notifikasi di sini jika ada --}}
             @if(session('success'))
                 <div class="alert alert-success text-white alert-dismissible fade show mt-3" role="alert">
                     {{ session('success') }}
@@ -47,6 +46,7 @@
     <div class="row">
         {{-- KOLOM KIRI --}}
         <div class="col-lg-8 mb-4 mb-lg-0">
+            
             {{-- KARTU OVERVIEW (Deskripsi & Progress) --}}
             <div class="card">
                 <div class="card-header pb-0">
@@ -58,10 +58,10 @@
                         <hr class="horizontal dark">
                     @endif
 
+                    {{-- ✅ PASTIKAN BLOK INI ADA DI SINI UNTUK MENGHINDARI ERROR --}}
                     @php
-                        $totalTasks = $project->tasks_count ?? $project->tasks->count();
-                        $completedTasks = $project->completed_tasks_count ?? $project->tasks->where('status', 'Selesai')->count();
-                        $progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+                        $totalTasks = $project->tasks->count();
+                        $completedTasks = $project->completed_tasks_count; // Memanggil accessor dari Model
                     @endphp
 
                     <div class="d-flex justify-content-between align-items-center mb-1">
@@ -70,7 +70,13 @@
                     </div>
                     <div class="progress-wrapper">
                         <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" style="width: {{ $progress }}%;" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">{{ $progress }}%</div>
+                            <div class="progress-bar bg-gradient-success" role="progressbar"
+                                 style="width: {{ $project->progress_percentage }}%;"
+                                 aria-valuenow="{{ $project->progress_percentage }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ $project->progress_percentage }}%
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -97,32 +103,21 @@
                                                     <a href="{{ route('pm.tasks.show', $task->id) }}" class="text-dark fw-bold text-decoration-none">{{ $task->title }}</a>
                                                 </h6>
                                                 <p class="text-xs text-secondary mb-0">Untuk: {{ $task->assignedTo?->name ?? 'N/A' }}</p>
-                                                
-                                                {{-- PENAMBAHAN: Menampilkan lampiran tugas --}}
-                                                @if($task->attachments && $task->attachments->count() > 0)
-                                                    <div class="mt-2">
-                                                        @foreach($task->attachments as $attachment)
-                                                            <a href="{{ Storage::url($attachment->path) }}" target="_blank" class="text-xs me-3 text-decoration-none">
-                                                                <i class="fas fa-paperclip text-secondary me-1"></i>{{ $attachment->filename ?? 'Lampiran' }}
-                                                            </a>
-                                                        @endforeach
-                                                    </div>
-                                                @endif
                                             </div>
                                         </div>
                                     </td>
                                     <td class="align-middle text-center text-sm">
                                         @php
                                             $status_class = 'bg-gradient-secondary';
-                                            if ($task->status === 'In Progress') $status_class = 'bg-gradient-info';
-                                            if ($task->status === 'Selesai') $status_class = 'bg-gradient-success';
-                                            if ($task->status === 'Revisi') $status_class = 'bg-gradient-warning';
-                                            if ($task->status === 'Blocked') $status_class = 'bg-gradient-danger';
+                                            if (in_array($task->status, ['In Progress'])) $status_class = 'bg-gradient-info';
+                                            if (in_array(strtolower($task->status), ['completed', 'selesai'])) $status_class = 'bg-gradient-success';
+                                            if (in_array($task->status, ['Revisi'])) $status_class = 'bg-gradient-warning';
+                                            if (in_array($task->status, ['Blocked'])) $status_class = 'bg-gradient-danger';
                                         @endphp
                                         <span class="badge badge-sm {{ $status_class }}">{{ $task->status }}</span>
                                     </td>
                                     <td class="align-middle text-center">
-                                        <span class="text-secondary text-xs font-weight-bold">{{ \Carbon\Carbon::parse($task->deadline)->isoFormat('D MMM Y') }}</span>
+                                        <span class="text-secondary text-xs font-weight-bold">{{ $task->deadline ? $task->deadline->isoFormat('D MMM Y') : '-' }}</span>
                                     </td>
                                 </tr>
                                 @empty
@@ -162,11 +157,11 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span class="text-sm">Tanggal Mulai</span>
-                            <strong class="text-sm">{{ \Carbon\Carbon::parse($project->start_date)->isoFormat('D MMMM YYYY') }}</strong>
+                            <strong class="text-sm">{{ $project->start_date->isoFormat('D MMMM YYYY') }}</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                             <span class="text-sm">Tenggat Waktu</span>
-                            <strong class="text-sm">{{ \Carbon\Carbon::parse($project->deadline_date)->isoFormat('D MMMM YYYY') }}</strong>
+                            <strong class="text-sm">{{ $project->deadline_date->isoFormat('D MMMM YYYY') }}</strong>
                         </li>
                     </ul>
                 </div>
@@ -181,7 +176,7 @@
                     <ul class="list-group list-group-flush">
                         @forelse($project->members as $member)
                         <li class="list-group-item d-flex align-items-center px-0">
-                            <img src="{{ $member->profile_photo_url ?? 'https://placehold.co/40x40/EFEFEF/333333?text='.substr($member->name, 0, 1) }}" alt="{{ $member->name }}" class="avatar avatar-sm rounded-circle me-3">
+                            <img src="{{ $member->profile_photo_url }}" alt="{{ $member->name }}" class="avatar avatar-sm rounded-circle me-3">
                             <div>
                                 <h6 class="mb-0 text-sm">{{ $member->name }}</h6>
                                 <p class="text-xs text-secondary mb-0">{{ $member->pivot->project_role ?? 'Member' }}</p>

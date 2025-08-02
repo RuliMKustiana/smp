@@ -22,8 +22,10 @@ class TaskController extends Controller
         $user = Auth::user();
         $stats = [];
         $statusesForFilter = [];
+        $baseQuery = Task::query(); // Inisialisasi baseQuery
 
         if ($user->can('view developer tasks')) {
+            // Untuk Developer: Ambil tugas yang di-assign ke dia
             $baseQuery = Task::where('assigned_to_id', $user->id);
             $allMyTasks = (clone $baseQuery)->get();
 
@@ -32,34 +34,35 @@ class TaskController extends Controller
                 'in_progress' => $allMyTasks->where('status', 'In Progress')->count(),
                 'in_review'   => $allMyTasks->where('status', 'In Review')->count(),
                 'completed'   => $allMyTasks->where('status', 'Completed')->count(),
-                'on_hold'     => $allMyTasks->where('status', 'Blocked')->count(),
-                'revisi'      => $allMyTasks->where('status', 'Revisi')->count(),
             ];
-            
+
             $statusesForFilter = ['To-Do', 'Revisi', 'In Progress', 'In Review', 'Completed', 'Blocked'];
-
         } elseif ($user->can('view qa tasks')) {
-            $baseQuery = Task::whereHas('project.members', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            });
-            $allMyTasks = (clone $baseQuery)->get();
+            // Untuk QA: Ambil tugas berstatus 'In Review' dari proyek di mana dia menjadi anggota
+            $baseQuery = Task::where('status', 'In Review')
+                ->whereHas('project.members', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                });
 
+            // Statistik untuk QA disesuaikan agar hanya menampilkan tugas yang siap direview
             $stats = [
-                'in_review'   => $allMyTasks->where('status', 'In Review')->count(),
-                'completed'   => $allMyTasks->where('status', 'Completed')->count(),
-                'revisi'      => $allMyTasks->where('status', 'Revisi')->count(),
-                'on_hold'     => $allMyTasks->where('status', 'Blocked')->count(),
+                'in_review'   => (clone $baseQuery)->count(),
             ];
-            
-            $statusesForFilter = ['In Review', 'Completed', 'Revisi', 'Blocked'];
+
+            // Filter yang relevan untuk QA
+            $statusesForFilter = ['In Review', 'Completed', 'Revisi'];
         } else {
-            $baseQuery = Task::query()->whereRaw('1 = 0');
+            // Jika tidak punya izin, jangan tampilkan apa-apa
+            $baseQuery->whereRaw('1 = 0');
         }
 
+        // --- LOGIKA FILTER DAN SORTING ---
+        // Logika ini sekarang akan berfungsi karena kita menggunakan $tasksQuery di akhir
         $tasksQuery = (clone $baseQuery);
         if ($request->filled('status')) {
             $status = str_replace('-', ' ', $request->status);
-            $tasksQuery->where('status', 'like', '%' . $status . '%');
+            // Gunakan where() yang lebih ketat daripada like() untuk filter status
+            $tasksQuery->where('status', $status);
         }
 
         if ($request->get('sort') == 'due_date') {
@@ -71,15 +74,7 @@ class TaskController extends Controller
             $tasksQuery->orderByRaw($orderCase)->orderBy('deadline', 'asc');
         }
 
-        $tasks = Task::where('assigned_to_id', auth()->id())
-            ->when(request('status'), function ($q) {
-                $status = request('status');
-                // Jika status dari filter pakai slug, konversi ke nama status
-                $status = Str::title(str_replace('-', ' ', $status));
-                $q->where('status', $status);
-            })
-            ->orderBy('deadline', 'asc')
-            ->paginate(12);
+        $tasks = $tasksQuery->paginate(12);
 
         return view('teammember.tasks.index', compact('tasks', 'stats', 'statusesForFilter'));
     }

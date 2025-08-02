@@ -32,7 +32,7 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center">
                                         @if($task->assignedTo)
-                                            <img src="https://placehold.co/32x32/EFEFEF/333333?text={{ substr($task->assignedTo->name, 0, 1) }}" alt="avatar" class="avatar avatar-xs rounded-circle">
+                                            <img src="{{ $task->assignedTo->profile_photo_url }}" alt="{{ $task->assignedTo->name }}" class="avatar avatar-xs rounded-circle">
                                             <span class="ms-2 text-xs font-weight-bold">{{ $task->assignedTo->name }}</span>
                                         @else
                                             <span class="text-xs font-weight-bold">Belum Ditugaskan</span>

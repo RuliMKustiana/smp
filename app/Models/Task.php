@@ -118,4 +118,31 @@ class Task extends Model
     {
         return $this->deadline && Carbon::now()->gt($this->deadline) && $this->status !== 'Completed';
     }
+
+    public function getProgressPercentageAttribute(): int
+    {
+        $status = \Illuminate\Support\Str::title($this->status);
+
+        return match ($status) {
+            'Completed' => 100,
+            'In Review' => 75,
+            'Revisi' => 50,
+            'In Progress' => 25,
+            default => 0, 
+        };
+    }
+
+    public function getProgressColorClassAttribute(): string
+    {
+        $status = \Illuminate\Support\Str::title($this->status);
+
+        return match ($status) {
+            'Completed' => 'bg-success',
+            'In Review' => 'bg-primary', 
+            'Revisi' => 'bg-warning',
+            'In Progress' => 'bg-info',
+            'Blocked' => 'bg-danger',
+            default => 'bg-secondary',
+        };
+    }
 }

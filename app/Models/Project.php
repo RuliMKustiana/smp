@@ -64,7 +64,6 @@ class Project extends Model
         'deadline_date' => 'date',
     ];
 
-    // Relationships
     public function projectManager()
     {
         return $this->belongsTo(User::class, 'project_manager_id');
@@ -90,14 +89,35 @@ class Project extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
-    // Helper methods
-    public function getProgressPercentageAttribute()
+    public function getProgressPercentageAttribute(): int
     {
-        $totalTasks = $this->tasks()->count();
-        if ($totalTasks === 0) return 0;
+        $totalTasks = $this->tasks->count();
 
-        $completedTasks = $this->tasks()->where('status', 'Completed')->count();
-        return round(($completedTasks / $totalTasks) * 100);
+        if ($totalTasks === 0) {
+            return 0;
+        }
+
+        $weightedProgressSum = 0;
+        foreach ($this->tasks as $task) {
+            $status = \Illuminate\Support\Str::title($task->status);
+
+            switch ($status) {
+                case 'Completed':
+                    $weightedProgressSum += 100;
+                    break;
+                case 'In Review':
+                    $weightedProgressSum += 75;
+                    break;
+                case 'Revisi':
+                    $weightedProgressSum += 50;
+                    break;
+                case 'In Progress':
+                    $weightedProgressSum += 25;
+                    break;
+            }
+        }
+
+        return round($weightedProgressSum / $totalTasks);
     }
 
     public function getDaysRemainingAttribute()
@@ -116,4 +136,35 @@ class Project extends Model
             ->withPivot('project_role')
             ->withTimestamps();
     }
+
+    public function getMyTasksProgressPercentageAttribute(): int
+{
+    $myTasks = $this->tasks()->where('assigned_to_id', auth()->id())->get();
+    $totalMyTasks = $myTasks->count();
+
+    if ($totalMyTasks === 0) {
+        return 0;
+    }
+
+    $weightedProgressSum = 0;
+    foreach ($myTasks as $task) {
+        $status = \Illuminate\Support\Str::title($task->status);
+        switch ($status) {
+            case 'Completed':
+                $weightedProgressSum += 100;
+                break;
+            case 'In Review':
+                $weightedProgressSum += 75;
+                break;
+            case 'Revisi':
+                $weightedProgressSum += 50;
+                break;
+            case 'In Progress':
+                $weightedProgressSum += 25;
+                break;
+        }
+    }
+
+    return round($weightedProgressSum / $totalMyTasks);
+}
 }

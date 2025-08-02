@@ -23,13 +23,12 @@ class ReportPolicy
 
     public function view(User $user, Report $report): bool
     {
-        // PM bisa melihat laporan di proyeknya atau yang ia buat
+        
         if ($user->hasRole('Project Manager')) {
             return $user->id === $report->project->project_manager_id ||
                    $user->id === $report->submitted_by_id;
         }
 
-        // Member bisa melihat laporan jika mereka anggota proyek atau yang mereka buat
         if ($user->hasRole(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst'])) {
             return $report->project->members->contains($user) ||
                    $user->id === $report->submitted_by_id;
@@ -40,17 +39,28 @@ class ReportPolicy
 
     public function create(User $user): bool
     {
-        // Menggunakan izin (permission)
         return $user->can('create reports');
     }
 
     public function update(User $user, Report $report): bool
-    {
-        // Menggunakan izin dan logika bisnis
-        return $user->can('edit own reports') &&
-               $user->id === $report->submitted_by_id && 
-               $report->status === 'Menunggu Persetujuan';
-    }
+{
+    $editableStatuses = ['Menunggu Persetujuan', 'Ditolak', 'rejected'];
+
+    // dd([
+    //     'ID User Login' => $user->id,
+    //     'ID Pembuat Laporan' => $report->submitted_by_id,
+    //     'Status Laporan' => $report->status,
+    //     '---' => '--- HASIL PENGECEKAN ---',
+    //     'Punya Izin "edit own reports"?' => $user->can('edit own reports'),
+    //     'Apakah Pemilik Laporan?' => $user->id === $report->submitted_by_id,
+    //     'Apakah Status Bisa Diedit?' => in_array(trim($report->status), $editableStatuses)
+    // ]);
+
+    // Kode asli Anda di bawahnya
+    return $user->can('edit own reports') &&
+           $user->id === $report->submitted_by_id && 
+           in_array($report->status, $editableStatuses);
+}
 
     public function delete(User $user, Report $report): bool
     {

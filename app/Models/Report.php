@@ -47,6 +47,10 @@ class Report extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'Menunggu Persetujuan';
+    public const STATUS_VALIDATED = 'Disetujui';
+    public const STATUS_REJECTED = 'Ditolak';
+
     protected $fillable = [
         'title',
         'type',
@@ -60,6 +64,10 @@ class Report extends Model
         
     ];
 
+    protected $casts = [
+        'validated_at' => 'datetime',
+    ];
+
     public function project()
     {
         return $this->belongsTo(Project::class);
@@ -70,16 +78,6 @@ class Report extends Model
         return $this->belongsTo(User::class, 'submitted_by_id');
     }
 
-    public function getStatusBadgeClassAttribute()
-    {
-        return match($this->status) {
-            'Menunggu Persetujuan' => 'bg-warning',
-            'Disetujui' => 'bg-success',
-            'Ditolak' => 'bg-danger',
-            default => 'bg-secondary'
-        };
-    }
-
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
@@ -87,7 +85,16 @@ class Report extends Model
 
     public function validator(): BelongsTo
     {
-        // Hubungan ini merujuk ke model User melalui foreign key 'validator_id'
         return $this->belongsTo(User::class, 'validator_id');
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match(strtolower($this->status)) {
+            'disetujui', 'validated' => 'bg-success',
+            'ditolak', 'rejected' => 'bg-danger',
+            'menunggu persetujuan', 'pending' => 'bg-warning',
+            default => 'bg-secondary'
+        };
     }
 }
