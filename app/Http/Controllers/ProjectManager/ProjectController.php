@@ -40,7 +40,10 @@ class ProjectController extends Controller
     public function create()
     {
         $this->authorize('create', Project::class);
-        $teamMembers = User::role(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst'])->orderBy('name')->get();
+        $teamMembers = User::whereDoesntHave('roles', function ($query) {
+            $query->whereIn('name', ['Project Manager', 'Admin']);
+        })->orderBy('name')->get();
+
         return view('pm.projects.create', compact('teamMembers'));
     }
 
@@ -84,7 +87,9 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-        $teamMembers = User::role(['Developer', 'QA', 'UI/UX Designer', 'Data Analyst'])->orderBy('name')->get();
+        $teamMembers = User::whereDoesntHave('roles', function ($query) {
+            $query->whereIn('name', ['Project Manager', 'Admin']);
+        })->orderBy('name')->get();
         $team_member_ids = $project->members->pluck('id')->toArray();
         return view('pm.projects.edit', compact('project', 'teamMembers', 'team_member_ids'));
     }
@@ -140,7 +145,7 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
         $validated = $request->validate([
-             // ✅ PERBAIKAN: Menggunakan daftar status yang konsisten
+            // ✅ PERBAIKAN: Menggunakan daftar status yang konsisten
             'status' => 'required|in:' . implode(',', $this->projectStatuses)
         ]);
         $project->update($validated);
@@ -153,6 +158,4 @@ class ProjectController extends Controller
         $members = $project->members()->with('division')->get();
         return view('pm.projects.members', compact('project', 'members'));
     }
-
-
 }
